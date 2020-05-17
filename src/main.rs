@@ -7,13 +7,11 @@ mod logger;
 mod recipe;
 
 use crate::cfg::Config;
-use crate::find::{filter_name, filter_size, summarize};
+use crate::dbg::dbg_info;
 use crate::logger::setup_logging;
 use fwalker::Walker;
 use std::path::PathBuf;
 use std::process;
-use crate::dbg::dbg_info;
-use std::sync::atomic::Ordering::AcqRel;
 use std::process::exit;
 
 fn main() {
@@ -30,11 +28,9 @@ fn main() {
         .iter()
         .map(PathBuf::from)
         .inspect(check_path)
-        .flat_map(|path: PathBuf| Walker::from(path).unwrap().max_depth(cfg.max_depth))
-        .filter(|f: &PathBuf| filter_name(f, &cfg.pattern))
+        .flat_map(|path: PathBuf| Walker::from(path).unwrap())
         .take(cfg.limit)
         .collect();
-
 }
 
 fn check_path(path: &PathBuf) {
@@ -51,6 +47,11 @@ fn check_path(path: &PathBuf) {
 const ACCEPTED_EXTENSIONS: [&str; 2] = ["md", "txt"];
 
 fn accept_file_ext(path: &PathBuf) -> bool {
-    let extension: &str = path.extension().unwrap_or("".as_ref()).into();
-    return ACCEPTED_EXTENSIONS.contains(&extension)
+    match path.extension() {
+        Some(ext) => {
+            let ext: &str = ext.to_str().unwrap_or("");
+            ACCEPTED_EXTENSIONS.contains(&ext)
+        }
+        None => false,
+    }
 }

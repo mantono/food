@@ -1,4 +1,3 @@
-use crate::args::Size::{Byte, Gigabyte, Kilobyte, Megabyte, Terabyte};
 use clap::{App, Arg, ArgMatches};
 
 pub fn args<'a>() -> ArgMatches<'a> {
