@@ -7,8 +7,8 @@ pub struct Ingredient {
 }
 
 impl Ingredient {
-    pub fn parse(input: &str) -> Result<Ingredient, &str> {
-        let parts: Vec<&str> = input.trim().rsplit(',').collect();
+    pub fn parse(input: &str) -> Result<Ingredient, String> {
+        let parts: Vec<&str> = input.trim().split(',').collect();
         match parts.len() {
             0 => panic!("Invalid line '{}", input),
             1 => {
@@ -39,16 +39,20 @@ pub enum Quantity {
 }
 
 impl Quantity {
-    pub fn parse(input: &str) -> Result<Quantity, &str> {
+    pub fn parse(input: &str) -> Result<Quantity, String> {
         if input.is_empty() {
             return Ok(Quantity::Pieces(1));
         }
 
         let parts: Vec<&str> = input.trim().split_whitespace().collect();
-        let number: u32 = match parts.first().unwrap().parse() {
-            Ok(0) => return Err("Invalid amount: 0"),
+        let num_input: &str = parts.first().unwrap();
+        let number: u32 = match num_input.parse() {
+            Ok(0) => return Err(String::from("Invalid amount: 0")),
             Ok(n) => n,
-            Err(e) => return Err("Invalid quantifier/integer"),
+            Err(e) => {
+                let err_msg: String = format!("Invalid quantifier/integer: {}", num_input);
+                return Err(err_msg);
+            }
         };
         let quantifier: &str = &parts[1..].join(" ").to_lowercase();
         let parsed_quantity: Quantity = match quantifier {
@@ -126,9 +130,9 @@ impl Volume {
 
 #[cfg(test)]
 mod tests {
-    use crate::recipe::Quantity;
     use crate::recipe::Volume;
     use crate::recipe::Weight;
+    use crate::recipe::{Ingredient, Quantity};
     use log::Level::Warn;
 
     #[test]
@@ -275,5 +279,12 @@ mod tests {
             Quantity::Custom(2, String::from("packages")),
             Quantity::parse("2 packages").unwrap()
         );
+    }
+
+    #[test]
+    fn test_parse_single_ingredient() {
+        let ingr = Ingredient::parse("milk, 2 l").unwrap();
+        assert_eq!("milk", ingr.item);
+        assert_eq!(Quantity::Volume(Volume::Liter(2)), ingr.amount);
     }
 }

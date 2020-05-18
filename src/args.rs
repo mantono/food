@@ -1,4 +1,7 @@
+use chrono::Datelike;
 use clap::{App, Arg, ArgMatches};
+use rand::Rng;
+use std::borrow::Borrow;
 
 pub fn args<'a>() -> ArgMatches<'a> {
     let path = Arg::with_name("path")
@@ -11,10 +14,19 @@ pub fn args<'a>() -> ArgMatches<'a> {
 
     let limit = Arg::with_name("limit")
         .takes_value(true)
+        .default_value("7")
+        .validator(is_digit)
         .short("l")
         .long("limit")
         .help("Limit how many files to list")
         .long_help("Only list the first N files found given by this limit. If no value is set for this option, the application will not stop until it has gone through all files in the directory and subdirectories.");
+
+    let seed = Arg::with_name("seed")
+        .takes_value(true)
+        .validator(is_digit)
+        .required(false)
+        .short("S")
+        .long("seed");
 
     let verbosity = Arg::with_name("verbosity")
         .takes_value(true)
@@ -46,9 +58,17 @@ pub fn args<'a>() -> ArgMatches<'a> {
         .author(crate_authors!())
         .arg(path)
         .arg(limit)
+        .arg(seed)
         .arg(verbosity)
         .arg(debug)
         .get_matches();
 
     args
+}
+
+fn is_digit(input: String) -> Result<(), String> {
+    match input.parse::<u32>() {
+        Ok(_) => Ok(()),
+        Err(e) => Err(e.to_string()),
+    }
 }

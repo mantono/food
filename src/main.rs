@@ -10,6 +10,10 @@ use crate::cfg::Config;
 use crate::dbg::dbg_info;
 use crate::logger::setup_logging;
 use fwalker::Walker;
+use rand::prelude::StdRng;
+use rand::seq::SliceRandom;
+use rand::SeedableRng;
+use std::borrow::BorrowMut;
 use std::path::PathBuf;
 use std::process;
 use std::process::exit;
@@ -23,14 +27,23 @@ fn main() {
         process::exit(0);
     }
 
-    let files: Vec<PathBuf> = cfg
+    let (dirs, files): (Vec<PathBuf>, Vec<PathBuf>) = cfg
         .paths
         .iter()
         .map(PathBuf::from)
         .inspect(check_path)
-        .flat_map(|path: PathBuf| Walker::from(path).unwrap())
-        .take(cfg.limit)
+        .partition(|p| p.is_dir());
+
+    let found_files: Vec<PathBuf> = dirs
+        .iter()
+        .flat_map(|path: &PathBuf| Walker::from(path).unwrap())
+        .filter(accept_file_ext)
         .collect();
+
+    let mut all_files: Vec<PathBuf> = [found_files, files].concat();
+    let mut rand = StdRng::seed_from_u64(cfg.seed);
+    all_files.shuffle(&mut rand);
+    all_files.iter().take(cfg.limit).for_each(|f| println!("{:?}", f));
 }
 
 fn check_path(path: &PathBuf) {
@@ -49,7 +62,7 @@ const ACCEPTED_EXTENSIONS: [&str; 2] = ["md", "txt"];
 fn accept_file_ext(path: &PathBuf) -> bool {
     match path.extension() {
         Some(ext) => {
-            let ext: &str = ext.to_str().unwrap_or("");
+            let ext: &str = &ext.to_str().unwrap_or("").to_lowercase();
             ACCEPTED_EXTENSIONS.contains(&ext)
         }
         None => false,
