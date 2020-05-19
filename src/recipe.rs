@@ -1,4 +1,5 @@
 use regex::Regex;
+use std::fmt;
 
 #[derive(Eq, PartialEq, Hash, Debug)]
 pub struct Ingredient {
@@ -6,27 +7,54 @@ pub struct Ingredient {
     amount: Quantity,
 }
 
+impl std::fmt::Display for Ingredient {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}, {}", self.item, self.amount)
+    }
+}
+
 impl Ingredient {
     pub fn parse(input: &str) -> Result<Ingredient, String> {
         let parts: Vec<&str> = input.trim().split(',').collect();
         match parts.len() {
-            0 => panic!("Invalid line '{}", input),
             1 => {
-                let ingr = Ingredient {
-                    item: parts.first().unwrap().to_string(),
+                let ingredient = Ingredient {
+                    item: Ingredient::extract_ingredient(&parts),
                     amount: Quantity::Pieces(1),
                 };
-                Ok(ingr)
+                Ok(ingredient)
             }
             2 => {
-                let ingr = Ingredient {
-                    item: parts.first().unwrap().to_string(),
+                let ingredient = Ingredient {
+                    item: Ingredient::extract_ingredient(&parts),
                     amount: Quantity::parse(parts[1])?,
                 };
-                Ok(ingr)
+                Ok(ingredient)
             }
-            _ => panic!("Invalid line '{}", input),
+            _ => Err(format!("Invalid line '{}'", input)),
         }
+    }
+
+    pub fn new(item: String, amount: Quantity) -> Ingredient {
+        Ingredient { item, amount }
+    }
+
+    fn extract_ingredient(parts: &Vec<&str>) -> String {
+        let pattern = Regex::new(r"^\s*-\s*").unwrap();
+        let item: String = parts.first().unwrap().to_string();
+        pattern.replace_all(&item, "").to_string()
+    }
+}
+
+impl std::ops::Add for Ingredient {
+    type Output = Ingredient;
+
+    fn add(self, other: Ingredient) -> Ingredient {
+        if self.item != other.item {
+            panic!("Cannot add items of different type")
+        }
+        let quantity = self.amount + other.amount;
+        Ingredient::new(self.item.clone(), quantity)
     }
 }
 
@@ -36,6 +64,39 @@ pub enum Quantity {
     Weight(Weight),
     Volume(Volume),
     Custom(u32, String),
+}
+
+trait StdUnit {
+    fn in_std_unit() -> u32;
+}
+
+impl std::ops::Add for Quantity {
+    type Output = Quantity;
+
+    fn add(self, other: Quantity) -> Quantity {
+        match (self, other) {
+            (Quantity::Pieces(n0), Quantity::Pieces(n1)) => Quantity::Pieces(n0 + n1),
+            (Quantity::Custom(n0, type0), Quantity::Custom(n1, type1)) if type0 == type1 => Quantity::Custom(n0 + n1, type0),
+            (Quantity::Volume(n0), Quantity::Volume(n1)) => Quantity::Volume(n0 + n1),
+            (Quantity::Weight(n0), Quantity::Weight(n1)) => Quantity::Weight(n0 + n1),
+            _ => self.clone(),
+        }
+    }
+}
+
+impl Clone for Quantity {
+    fn clone(&self) -> Self {
+        match self {
+            Quantity::Pieces(n) => Quantity::Pieces(n.clone()),
+            Quantity::Weight(w) => unimplemented!(),
+            Quantity::Volume(v) => unimplemented!(),
+            Quantity::Custom(n, t) => Quantity::Custom(n.clone(), t.clone()),
+        }
+    }
+
+    fn clone_from(&mut self, source: &Self) {
+        unimplemented!()
+    }
 }
 
 impl Quantity {
@@ -78,6 +139,18 @@ impl Quantity {
     }
 }
 
+impl fmt::Display for Quantity {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let (number, unit): (u32, &str) = match self {
+            Quantity::Weight(w) => (w.as_grams(), "g"),
+            Quantity::Volume(v) => (v.as_milliliters(), "ml"),
+            Quantity::Pieces(n) => (*n, ""),
+            Quantity::Custom(n, t) => (*n, t),
+        };
+        write!(f, "{} {}", number, unit)
+    }
+}
+
 #[derive(Eq, PartialEq, Hash, Debug)]
 pub enum Weight {
     Kilogram(u32),
@@ -87,13 +160,22 @@ pub enum Weight {
 }
 
 impl Weight {
-    fn as_grams(&self) -> u32 {
+    pub fn as_grams(&self) -> u32 {
         match self {
             Weight::Kilogram(w) => 1000 * w,
             Weight::Gram(w) => *w,
             Weight::Pounds(w) => ((*w as f32) * 453.59237) as u32,
             Weight::Ounces(w) => ((*w as f32) * 28.349523125) as u32,
         }
+    }
+}
+
+impl std::ops::Add for Weight {
+    type Output = Weight;
+
+    fn add(self, other: Weight) -> Weight {
+        let sum: u32 = self.as_grams() + other.as_grams();
+        Weight::Gram(sum)
     }
 }
 
@@ -112,7 +194,7 @@ pub enum Volume {
 }
 
 impl Volume {
-    fn as_milliliters(&self) -> u32 {
+    pub fn as_milliliters(&self) -> u32 {
         match self {
             Volume::Liter(v) => v * 1000,
             Volume::Deciliter(v) => v * 100,
@@ -128,10 +210,19 @@ impl Volume {
     }
 }
 
+impl std::ops::Add for Volume {
+    type Output = Volume;
+
+    fn add(self, other: Volume) -> Volume {
+        let sum: u32 = self.as_milliliters() + other.as_milliliters();
+        Volume::Milliliter(sum)
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::recipe::Volume;
     use crate::recipe::Weight;
+    use crate::recipe::{merge, Volume};
     use crate::recipe::{Ingredient, Quantity};
     use log::Level::Warn;
 
@@ -287,4 +378,44 @@ mod tests {
         assert_eq!("milk", ingr.item);
         assert_eq!(Quantity::Volume(Volume::Liter(2)), ingr.amount);
     }
+
+    #[test]
+    fn test_parse_single_ingredient_with_dashes_and_whitespace() {
+        let ingr = Ingredient::parse(" - milk, 2 l").unwrap();
+        assert_eq!("milk", ingr.item);
+        assert_eq!(Quantity::Volume(Volume::Liter(2)), ingr.amount);
+    }
+
+    #[test]
+    fn test_merge_same_ingredient_same_unit() {
+        let items: Vec<Ingredient> = vec![
+            Ingredient::parse(" - milk, 5 dl").unwrap(),
+            Ingredient::parse(" - milk, 4 dl").unwrap(),
+        ];
+
+        let items: Vec<Ingredient> = merge(items);
+        let milk: &Ingredient = items.first().unwrap();
+        assert_eq!(Quantity::Volume(Volume::Milliliter(900u32)), milk.amount)
+    }
+
+    #[test]
+    fn test_merge_same_ingredient_different() {
+        let items: Vec<Ingredient> = vec![
+            Ingredient::parse(" - milk, 5 dl").unwrap(),
+            Ingredient::parse(" - milk, 1 l").unwrap(),
+        ];
+
+        let items: Vec<Ingredient> = merge(items);
+        let milk: &Ingredient = items.first().unwrap();
+        assert_eq!(Quantity::Volume(Volume::Milliliter(1500u32)), milk.amount)
+    }
+}
+
+fn merge(mut ingredients: Vec<Ingredient>) -> Vec<Ingredient> {
+    ingredients.sort_by(|i0, i1| i0.item.cmp(&i1.item));
+    ingredients
+    // .iter()
+    // .zip(ingredients[1..].iter())
+    // .map(|(i0, i1)| if i0.item == i1.item { *i0 + *i1 } else { *i0 })
+    // .collect()
 }

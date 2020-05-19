@@ -9,11 +9,14 @@ mod recipe;
 use crate::cfg::Config;
 use crate::dbg::dbg_info;
 use crate::logger::setup_logging;
+use crate::recipe::Ingredient;
 use fwalker::Walker;
 use rand::prelude::StdRng;
 use rand::seq::SliceRandom;
 use rand::SeedableRng;
+use regex::Regex;
 use std::borrow::BorrowMut;
+use std::net::Shutdown::Read;
 use std::path::PathBuf;
 use std::process;
 use std::process::exit;
@@ -43,7 +46,22 @@ fn main() {
     let mut all_files: Vec<PathBuf> = [found_files, files].concat();
     let mut rand = StdRng::seed_from_u64(cfg.seed);
     all_files.shuffle(&mut rand);
-    all_files.iter().take(cfg.limit).for_each(|f| println!("{:?}", f));
+
+    let pattern = Regex::new(r"^\s*-\s*").unwrap();
+
+    let output: Vec<_> = all_files
+        .iter_mut()
+        .take(cfg.limit)
+        .inspect(|f| println!("{:?}", f))
+        .map(std::fs::read_to_string)
+        .filter_map(Result::ok)
+        .flat_map(|d: String| d.lines().map(str::to_owned).collect::<Vec<String>>())
+        .filter(|line| pattern.is_match(line))
+        .map(|line| Ingredient::parse(&line))
+        .filter_map(Result::ok)
+        .collect();
+
+    output.iter().for_each(|i| println!("{}", i))
 }
 
 fn check_path(path: &PathBuf) {
