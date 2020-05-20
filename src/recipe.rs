@@ -1,7 +1,9 @@
+use itertools::{Group, Itertools};
 use regex::Regex;
 use std::fmt;
+use std::ops::Add;
 
-#[derive(Eq, PartialEq, Hash, Debug)]
+#[derive(Eq, PartialEq, Hash, Debug, Clone)]
 pub struct Ingredient {
     item: String,
     amount: Quantity,
@@ -58,7 +60,7 @@ impl std::ops::Add for Ingredient {
     }
 }
 
-#[derive(Eq, PartialEq, Hash, Debug)]
+#[derive(Eq, PartialEq, Hash, Debug, Clone)]
 pub enum Quantity {
     Pieces(u32),
     Weight(Weight),
@@ -74,28 +76,14 @@ impl std::ops::Add for Quantity {
     type Output = Quantity;
 
     fn add(self, other: Quantity) -> Quantity {
+        let this = self.clone();
         match (self, other) {
             (Quantity::Pieces(n0), Quantity::Pieces(n1)) => Quantity::Pieces(n0 + n1),
             (Quantity::Custom(n0, type0), Quantity::Custom(n1, type1)) if type0 == type1 => Quantity::Custom(n0 + n1, type0),
             (Quantity::Volume(n0), Quantity::Volume(n1)) => Quantity::Volume(n0 + n1),
             (Quantity::Weight(n0), Quantity::Weight(n1)) => Quantity::Weight(n0 + n1),
-            _ => self.clone(),
+            _ => this,
         }
-    }
-}
-
-impl Clone for Quantity {
-    fn clone(&self) -> Self {
-        match self {
-            Quantity::Pieces(n) => Quantity::Pieces(n.clone()),
-            Quantity::Weight(w) => unimplemented!(),
-            Quantity::Volume(v) => unimplemented!(),
-            Quantity::Custom(n, t) => Quantity::Custom(n.clone(), t.clone()),
-        }
-    }
-
-    fn clone_from(&mut self, source: &Self) {
-        unimplemented!()
     }
 }
 
@@ -151,7 +139,7 @@ impl fmt::Display for Quantity {
     }
 }
 
-#[derive(Eq, PartialEq, Hash, Debug)]
+#[derive(Eq, PartialEq, Hash, Debug, Clone)]
 pub enum Weight {
     Kilogram(u32),
     Gram(u32),
@@ -179,7 +167,7 @@ impl std::ops::Add for Weight {
     }
 }
 
-#[derive(Eq, PartialEq, Hash, Debug)]
+#[derive(Eq, PartialEq, Hash, Debug, Clone)]
 pub enum Volume {
     Liter(u32),
     Deciliter(u32),
@@ -216,6 +204,30 @@ impl std::ops::Add for Volume {
     fn add(self, other: Volume) -> Volume {
         let sum: u32 = self.as_milliliters() + other.as_milliliters();
         Volume::Milliliter(sum)
+    }
+}
+
+pub fn merge(mut ingredients: Vec<Ingredient>) -> Vec<Ingredient> {
+    ingredients.sort_by(|i0, i1| i0.item.cmp(&i1.item));
+    ingredients
+        .iter()
+        .group_by(|i| i.item.clone())
+        .into_iter()
+        .map(|(_, v)| sum(v.collect::<Vec<&Ingredient>>()))
+        .collect()
+}
+
+fn sum(ingredients: Vec<&Ingredient>) -> Ingredient {
+    ingredients[1..]
+        .iter()
+        .fold(ingredients[0].clone(), |i0, i1| try_add(&i0, i1))
+}
+
+fn try_add(i0: &Ingredient, i1: &Ingredient) -> Ingredient {
+    if i0.item != i1.item {
+        (*i0).clone()
+    } else {
+        (*i0).clone().add((*i1).clone())
     }
 }
 
@@ -409,13 +421,4 @@ mod tests {
         let milk: &Ingredient = items.first().unwrap();
         assert_eq!(Quantity::Volume(Volume::Milliliter(1500u32)), milk.amount)
     }
-}
-
-fn merge(mut ingredients: Vec<Ingredient>) -> Vec<Ingredient> {
-    ingredients.sort_by(|i0, i1| i0.item.cmp(&i1.item));
-    ingredients
-    // .iter()
-    // .zip(ingredients[1..].iter())
-    // .map(|(i0, i1)| if i0.item == i1.item { *i0 + *i1 } else { *i0 })
-    // .collect()
 }

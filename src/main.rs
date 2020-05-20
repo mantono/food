@@ -9,7 +9,7 @@ mod recipe;
 use crate::cfg::Config;
 use crate::dbg::dbg_info;
 use crate::logger::setup_logging;
-use crate::recipe::Ingredient;
+use crate::recipe::{Ingredient, merge};
 use fwalker::Walker;
 use rand::prelude::StdRng;
 use rand::seq::SliceRandom;
@@ -60,6 +60,8 @@ fn main() {
         .map(|line| Ingredient::parse(&line))
         .filter_map(Result::ok)
         .collect();
+
+    let output = merge(output);
 
     output.iter().for_each(|i| println!("{}", i))
 }
