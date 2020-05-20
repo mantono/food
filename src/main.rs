@@ -9,7 +9,7 @@ mod recipe;
 use crate::cfg::Config;
 use crate::dbg::dbg_info;
 use crate::logger::setup_logging;
-use crate::recipe::{Ingredient, merge};
+use crate::recipe::{divide_unit, merge, Ingredient};
 use fwalker::Walker;
 use rand::prelude::StdRng;
 use rand::seq::SliceRandom;
@@ -63,7 +63,7 @@ fn main() {
 
     let output = merge(output);
 
-    output.iter().for_each(|i| println!("{}", i))
+    output.iter().map(divide_unit).for_each(|i| println!("{}", i))
 }
 
 fn check_path(path: &PathBuf) {

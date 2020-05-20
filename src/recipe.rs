@@ -231,6 +231,38 @@ fn try_add(i0: &Ingredient, i1: &Ingredient) -> Ingredient {
     }
 }
 
+pub fn divide_unit(i: &Ingredient) -> Ingredient {
+    let q: Quantity = match &i.amount {
+        Quantity::Weight(w) => {
+            let grams: u32 = w.as_grams();
+            let weight: Weight = if grams % 1_000 == 0 {
+                Weight::Kilogram(grams / 1_000)
+            } else {
+                Weight::Gram(grams)
+            };
+            Quantity::Weight(weight)
+        }
+        Quantity::Volume(v) => {
+            let milliliters: u32 = v.as_milliliters();
+            let volume: Volume = if milliliters % 1_000 == 0 {
+                Volume::Liter(milliliters / 1_000)
+            } else if milliliters % 100 == 0 {
+                Volume::Deciliter(milliliters / 100)
+            } else if milliliters % 10 == 0 {
+                Volume::Centiliter(milliliters / 10)
+            } else {
+                Volume::Milliliter(milliliters)
+            };
+            Quantity::Volume(volume)
+        }
+        _ => i.amount.clone(),
+    };
+    Ingredient {
+        item: i.item.clone(),
+        amount: q,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::recipe::Weight;
@@ -407,7 +439,7 @@ mod tests {
 
         let items: Vec<Ingredient> = merge(items);
         let milk: &Ingredient = items.first().unwrap();
-        assert_eq!(Quantity::Volume(Volume::Milliliter(900u32)), milk.amount)
+        assert_eq!(Quantity::Volume(Volume::Deciliter(932)), milk.amount)
     }
 
     #[test]
@@ -419,6 +451,6 @@ mod tests {
 
         let items: Vec<Ingredient> = merge(items);
         let milk: &Ingredient = items.first().unwrap();
-        assert_eq!(Quantity::Volume(Volume::Milliliter(1500u32)), milk.amount)
+        assert_eq!(Quantity::Volume(Volume::Deciliter(15u32)), milk.amount)
     }
 }
