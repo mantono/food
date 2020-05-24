@@ -197,7 +197,6 @@ impl Volume {
             Volume::Ounces(v) => ((*v as f32) * 29.6) as u32,
             Volume::Cups(v) => 237 * v,
         }
-        .clone()
     }
 }
 
