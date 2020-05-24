@@ -207,10 +207,6 @@ impl std::ops::Add for Volume {
 #[cfg(test)]
 mod tests {
     use crate::qty::{Quantity, Volume, Weight};
-    use crate::recipe::{divide_unit, Weight};
-    use crate::recipe::{merge, Volume};
-    use crate::recipe::{Ingredient, Quantity};
-    use log::Level::Warn;
 
     #[test]
     fn test_parse_quantity_volume_liter() {
