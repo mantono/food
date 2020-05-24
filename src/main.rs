@@ -4,6 +4,7 @@ mod args;
 mod cfg;
 mod dbg;
 mod logger;
+mod qty;
 mod recipe;
 
 use crate::cfg::Config;
