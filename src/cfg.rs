@@ -11,10 +11,22 @@ pub struct Config {
 
 impl Config {
     pub fn from_args(args: ArgMatches) -> Config {
-        let limit: usize = args.value_of("limit").unwrap_or(&std::u64::MAX.to_string()).parse().unwrap();
-        let paths: Vec<String> = args.values_of("path").unwrap().map(|v| v.to_string()).collect();
+        let limit: usize = args
+            .value_of("limit")
+            .unwrap_or(&std::u64::MAX.to_string())
+            .parse()
+            .unwrap();
+        let paths: Vec<String> = args
+            .values_of("path")
+            .unwrap()
+            .map(|v| v.to_string())
+            .collect();
         let default_seed: String = gen_seed().to_string();
-        let seed: u64 = args.value_of("seed").unwrap_or(&default_seed).parse().unwrap();
+        let seed: u64 = args
+            .value_of("seed")
+            .unwrap_or(&default_seed)
+            .parse()
+            .unwrap();
         let verbosity_level: u8 = args.value_of("verbosity").unwrap().parse::<u8>().unwrap();
         let print_dbg: bool = args.is_present("debug");
 

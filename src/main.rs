@@ -61,7 +61,10 @@ fn main() {
 
     let output = merge(output);
 
-    output.iter().map(divide_unit).for_each(|i| println!("{}", i))
+    output
+        .iter()
+        .map(divide_unit)
+        .for_each(|i| println!("{}", i))
 }
 
 fn check_path(path: &PathBuf) {

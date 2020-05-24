@@ -119,9 +119,9 @@ pub fn divide_unit(i: &Ingredient) -> Ingredient {
 
 #[cfg(test)]
 mod tests {
-    use crate::qty::Volume;
+    use crate::qty::{Quantity, Volume};
+    use crate::recipe::Ingredient;
     use crate::recipe::{divide_unit, merge};
-    use crate::recipe::{Ingredient, Quantity};
 
     #[test]
     fn test_parse_single_ingredient() {

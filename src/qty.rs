@@ -19,7 +19,9 @@ impl std::ops::Add for Quantity {
         let this = self.clone();
         match (self, other) {
             (Quantity::Pieces(n0), Quantity::Pieces(n1)) => Quantity::Pieces(n0 + n1),
-            (Quantity::Custom(n0, type0), Quantity::Custom(n1, type1)) if type0 == type1 => Quantity::Custom(n0 + n1, type0),
+            (Quantity::Custom(n0, type0), Quantity::Custom(n1, type1)) if type0 == type1 => {
+                Quantity::Custom(n0 + n1, type0)
+            }
             (Quantity::Volume(n0), Quantity::Volume(n1)) => Quantity::Volume(n0 + n1),
             (Quantity::Weight(n0), Quantity::Weight(n1)) => Quantity::Weight(n0 + n1),
             _ => this,
@@ -50,8 +52,12 @@ impl Quantity {
             "dl" | "deciliter" | "deciliters" => Quantity::Volume(Volume::Deciliter(number)),
             "cl" | "centiliter" | "centiliters" => Quantity::Volume(Volume::Centiliter(number)),
             "ml" | "milliliter" | "milliliters" => Quantity::Volume(Volume::Milliliter(number)),
-            "tbsp" | "tb" | "msk" | "matsked" | "tablespoon" | "tablespoons" => Quantity::Volume(Volume::Tablespoon(number)),
-            "tspn" | "tsp" | "ts" | "tsk" | "tesked" | "teaspoon" | "teaspoons" => Quantity::Volume(Volume::Teaspoon(number)),
+            "tbsp" | "tb" | "msk" | "matsked" | "tablespoon" | "tablespoons" => {
+                Quantity::Volume(Volume::Tablespoon(number))
+            }
+            "tspn" | "tsp" | "ts" | "tsk" | "tesked" | "teaspoon" | "teaspoons" => {
+                Quantity::Volume(Volume::Teaspoon(number))
+            }
             "krm" | "kryddmått" => Quantity::Volume(Volume::Spices(number)),
             "p" | "pt" | "pint" | "pints" => Quantity::Volume(Volume::Pints(number)),
             "cup" | "cups" => Quantity::Volume(Volume::Cups(number)),
@@ -210,9 +216,18 @@ mod tests {
 
     #[test]
     fn test_parse_quantity_volume_liter() {
-        assert_eq!(Quantity::Volume(Volume::Liter(1)), Quantity::parse("1 liter").unwrap());
-        assert_eq!(Quantity::Volume(Volume::Liter(2)), Quantity::parse("2 l").unwrap());
-        assert_eq!(Quantity::Volume(Volume::Liter(3)), Quantity::parse("3 liters").unwrap());
+        assert_eq!(
+            Quantity::Volume(Volume::Liter(1)),
+            Quantity::parse("1 liter").unwrap()
+        );
+        assert_eq!(
+            Quantity::Volume(Volume::Liter(2)),
+            Quantity::parse("2 l").unwrap()
+        );
+        assert_eq!(
+            Quantity::Volume(Volume::Liter(3)),
+            Quantity::parse("3 liters").unwrap()
+        );
     }
 
     #[test]
@@ -221,7 +236,10 @@ mod tests {
             Quantity::Volume(Volume::Deciliter(1)),
             Quantity::parse("1 deciliter").unwrap()
         );
-        assert_eq!(Quantity::Volume(Volume::Deciliter(2)), Quantity::parse("2 dl").unwrap());
+        assert_eq!(
+            Quantity::Volume(Volume::Deciliter(2)),
+            Quantity::parse("2 dl").unwrap()
+        );
         assert_eq!(
             Quantity::Volume(Volume::Deciliter(3)),
             Quantity::parse("3 deciliters").unwrap()
@@ -234,7 +252,10 @@ mod tests {
             Quantity::Volume(Volume::Centiliter(1)),
             Quantity::parse("1 centiliter").unwrap()
         );
-        assert_eq!(Quantity::Volume(Volume::Centiliter(2)), Quantity::parse("2 cl").unwrap());
+        assert_eq!(
+            Quantity::Volume(Volume::Centiliter(2)),
+            Quantity::parse("2 cl").unwrap()
+        );
         assert_eq!(
             Quantity::Volume(Volume::Centiliter(3)),
             Quantity::parse("3 centiliters").unwrap()
@@ -247,7 +268,10 @@ mod tests {
             Quantity::Volume(Volume::Milliliter(1)),
             Quantity::parse("1 milliliter").unwrap()
         );
-        assert_eq!(Quantity::Volume(Volume::Milliliter(2)), Quantity::parse("2 ml").unwrap());
+        assert_eq!(
+            Quantity::Volume(Volume::Milliliter(2)),
+            Quantity::parse("2 ml").unwrap()
+        );
         assert_eq!(
             Quantity::Volume(Volume::Milliliter(3)),
             Quantity::parse("3 milliliters").unwrap()
@@ -260,9 +284,18 @@ mod tests {
             Quantity::Volume(Volume::Tablespoon(1)),
             Quantity::parse("1 tablespoon").unwrap()
         );
-        assert_eq!(Quantity::Volume(Volume::Tablespoon(2)), Quantity::parse("2 tbsp").unwrap());
-        assert_eq!(Quantity::Volume(Volume::Tablespoon(2)), Quantity::parse("2 tb").unwrap());
-        assert_eq!(Quantity::Volume(Volume::Tablespoon(2)), Quantity::parse("2 msk").unwrap());
+        assert_eq!(
+            Quantity::Volume(Volume::Tablespoon(2)),
+            Quantity::parse("2 tbsp").unwrap()
+        );
+        assert_eq!(
+            Quantity::Volume(Volume::Tablespoon(2)),
+            Quantity::parse("2 tb").unwrap()
+        );
+        assert_eq!(
+            Quantity::Volume(Volume::Tablespoon(2)),
+            Quantity::parse("2 msk").unwrap()
+        );
         assert_eq!(
             Quantity::Volume(Volume::Tablespoon(3)),
             Quantity::parse("3 tablespoons").unwrap()
@@ -271,71 +304,158 @@ mod tests {
 
     #[test]
     fn test_parse_quantity_volume_teaspoon() {
-        assert_eq!(Quantity::Volume(Volume::Teaspoon(1)), Quantity::parse("1 teaspoon").unwrap());
-        assert_eq!(Quantity::Volume(Volume::Teaspoon(2)), Quantity::parse("2 tsp").unwrap());
-        assert_eq!(Quantity::Volume(Volume::Teaspoon(2)), Quantity::parse("2 tspn").unwrap());
-        assert_eq!(Quantity::Volume(Volume::Teaspoon(2)), Quantity::parse("2 ts").unwrap());
-        assert_eq!(Quantity::Volume(Volume::Teaspoon(2)), Quantity::parse("2 tsk").unwrap());
-        assert_eq!(Quantity::Volume(Volume::Teaspoon(2)), Quantity::parse("2 tesked").unwrap());
-        assert_eq!(Quantity::Volume(Volume::Teaspoon(3)), Quantity::parse("3 teaspoons").unwrap());
+        assert_eq!(
+            Quantity::Volume(Volume::Teaspoon(1)),
+            Quantity::parse("1 teaspoon").unwrap()
+        );
+        assert_eq!(
+            Quantity::Volume(Volume::Teaspoon(2)),
+            Quantity::parse("2 tsp").unwrap()
+        );
+        assert_eq!(
+            Quantity::Volume(Volume::Teaspoon(2)),
+            Quantity::parse("2 tspn").unwrap()
+        );
+        assert_eq!(
+            Quantity::Volume(Volume::Teaspoon(2)),
+            Quantity::parse("2 ts").unwrap()
+        );
+        assert_eq!(
+            Quantity::Volume(Volume::Teaspoon(2)),
+            Quantity::parse("2 tsk").unwrap()
+        );
+        assert_eq!(
+            Quantity::Volume(Volume::Teaspoon(2)),
+            Quantity::parse("2 tesked").unwrap()
+        );
+        assert_eq!(
+            Quantity::Volume(Volume::Teaspoon(3)),
+            Quantity::parse("3 teaspoons").unwrap()
+        );
     }
 
     #[test]
     fn test_parse_quantity_volume_spices() {
-        assert_eq!(Quantity::Volume(Volume::Spices(1)), Quantity::parse("1 krm").unwrap());
-        assert_eq!(Quantity::Volume(Volume::Spices(2)), Quantity::parse("2 kryddmått").unwrap());
+        assert_eq!(
+            Quantity::Volume(Volume::Spices(1)),
+            Quantity::parse("1 krm").unwrap()
+        );
+        assert_eq!(
+            Quantity::Volume(Volume::Spices(2)),
+            Quantity::parse("2 kryddmått").unwrap()
+        );
     }
 
     #[test]
     fn test_parse_quantity_volume_pints() {
-        assert_eq!(Quantity::Volume(Volume::Pints(1)), Quantity::parse("1 pint").unwrap());
-        assert_eq!(Quantity::Volume(Volume::Pints(2)), Quantity::parse("2 p").unwrap());
-        assert_eq!(Quantity::Volume(Volume::Pints(2)), Quantity::parse("2 pt").unwrap());
-        assert_eq!(Quantity::Volume(Volume::Pints(3)), Quantity::parse("3 pints").unwrap());
+        assert_eq!(
+            Quantity::Volume(Volume::Pints(1)),
+            Quantity::parse("1 pint").unwrap()
+        );
+        assert_eq!(
+            Quantity::Volume(Volume::Pints(2)),
+            Quantity::parse("2 p").unwrap()
+        );
+        assert_eq!(
+            Quantity::Volume(Volume::Pints(2)),
+            Quantity::parse("2 pt").unwrap()
+        );
+        assert_eq!(
+            Quantity::Volume(Volume::Pints(3)),
+            Quantity::parse("3 pints").unwrap()
+        );
     }
 
     #[test]
     fn test_parse_quantity_volume_cups() {
-        assert_eq!(Quantity::Volume(Volume::Cups(1)), Quantity::parse("1 cup").unwrap());
-        assert_eq!(Quantity::Volume(Volume::Cups(2)), Quantity::parse("2 cups").unwrap());
+        assert_eq!(
+            Quantity::Volume(Volume::Cups(1)),
+            Quantity::parse("1 cup").unwrap()
+        );
+        assert_eq!(
+            Quantity::Volume(Volume::Cups(2)),
+            Quantity::parse("2 cups").unwrap()
+        );
     }
 
     #[test]
     fn test_parse_quantity_volume_ounces() {
-        assert_eq!(Quantity::Volume(Volume::Ounces(1)), Quantity::parse("1 fluid ounce").unwrap());
+        assert_eq!(
+            Quantity::Volume(Volume::Ounces(1)),
+            Quantity::parse("1 fluid ounce").unwrap()
+        );
         assert_eq!(
             Quantity::Volume(Volume::Ounces(2)),
             Quantity::parse("2 fluid ounces").unwrap()
         );
-        assert_eq!(Quantity::Volume(Volume::Ounces(3)), Quantity::parse("3 fl oz").unwrap());
+        assert_eq!(
+            Quantity::Volume(Volume::Ounces(3)),
+            Quantity::parse("3 fl oz").unwrap()
+        );
     }
 
     #[test]
     fn test_parse_quantity_weights_kilogram() {
-        assert_eq!(Quantity::Weight(Weight::Kilogram(1)), Quantity::parse("1 kilogram").unwrap());
-        assert_eq!(Quantity::Weight(Weight::Kilogram(2)), Quantity::parse("2 kg").unwrap());
-        assert_eq!(Quantity::Weight(Weight::Kilogram(3)), Quantity::parse("3 kilograms").unwrap());
+        assert_eq!(
+            Quantity::Weight(Weight::Kilogram(1)),
+            Quantity::parse("1 kilogram").unwrap()
+        );
+        assert_eq!(
+            Quantity::Weight(Weight::Kilogram(2)),
+            Quantity::parse("2 kg").unwrap()
+        );
+        assert_eq!(
+            Quantity::Weight(Weight::Kilogram(3)),
+            Quantity::parse("3 kilograms").unwrap()
+        );
     }
 
     #[test]
     fn test_parse_quantity_weights_gram() {
-        assert_eq!(Quantity::Weight(Weight::Gram(1)), Quantity::parse("1 gram").unwrap());
-        assert_eq!(Quantity::Weight(Weight::Gram(2)), Quantity::parse("2 g").unwrap());
-        assert_eq!(Quantity::Weight(Weight::Gram(3)), Quantity::parse("3 grams").unwrap());
+        assert_eq!(
+            Quantity::Weight(Weight::Gram(1)),
+            Quantity::parse("1 gram").unwrap()
+        );
+        assert_eq!(
+            Quantity::Weight(Weight::Gram(2)),
+            Quantity::parse("2 g").unwrap()
+        );
+        assert_eq!(
+            Quantity::Weight(Weight::Gram(3)),
+            Quantity::parse("3 grams").unwrap()
+        );
     }
 
     #[test]
     fn test_parse_quantity_weights_pounds() {
-        assert_eq!(Quantity::Weight(Weight::Pounds(1)), Quantity::parse("1 pound").unwrap());
-        assert_eq!(Quantity::Weight(Weight::Pounds(2)), Quantity::parse("2 lbs").unwrap());
-        assert_eq!(Quantity::Weight(Weight::Pounds(3)), Quantity::parse("3 pounds").unwrap());
+        assert_eq!(
+            Quantity::Weight(Weight::Pounds(1)),
+            Quantity::parse("1 pound").unwrap()
+        );
+        assert_eq!(
+            Quantity::Weight(Weight::Pounds(2)),
+            Quantity::parse("2 lbs").unwrap()
+        );
+        assert_eq!(
+            Quantity::Weight(Weight::Pounds(3)),
+            Quantity::parse("3 pounds").unwrap()
+        );
     }
 
     #[test]
     fn test_parse_quantity_weights_ounces() {
-        assert_eq!(Quantity::Weight(Weight::Ounces(1)), Quantity::parse("1 ounce").unwrap());
-        assert_eq!(Quantity::Weight(Weight::Ounces(2)), Quantity::parse("2 ounces").unwrap());
-        assert_eq!(Quantity::Weight(Weight::Ounces(3)), Quantity::parse("3 oz").unwrap());
+        assert_eq!(
+            Quantity::Weight(Weight::Ounces(1)),
+            Quantity::parse("1 ounce").unwrap()
+        );
+        assert_eq!(
+            Quantity::Weight(Weight::Ounces(2)),
+            Quantity::parse("2 ounces").unwrap()
+        );
+        assert_eq!(
+            Quantity::Weight(Weight::Ounces(3)),
+            Quantity::parse("3 oz").unwrap()
+        );
     }
 
     #[test]
