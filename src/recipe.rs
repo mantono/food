@@ -127,11 +127,16 @@ impl Quantity {
     }
 }
 
+trait Quantifiable {
+    fn amount(&self) -> u32;
+    fn unit(&self) -> &str;
+}
+
 impl fmt::Display for Quantity {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let (number, unit): (u32, &str) = match self {
-            Quantity::Weight(w) => (w.as_grams(), "g"),
-            Quantity::Volume(v) => (v.as_milliliters(), "ml"),
+            Quantity::Weight(w) => (w.amount(), w.unit()),
+            Quantity::Volume(v) => (v.amount(), v.unit()),
             Quantity::Pieces(n) => (*n, ""),
             Quantity::Custom(n, t) => (*n, t),
         };
@@ -164,6 +169,58 @@ impl std::ops::Add for Weight {
     fn add(self, other: Weight) -> Weight {
         let sum: u32 = self.as_grams() + other.as_grams();
         Weight::Gram(sum)
+    }
+}
+
+impl Quantifiable for Weight {
+    fn amount(&self) -> u32 {
+        *match self {
+            Weight::Gram(g) => g,
+            Weight::Pounds(lbs) => lbs,
+            Weight::Ounces(oz) => oz,
+            Weight::Kilogram(kg) => kg,
+        }
+    }
+
+    fn unit(&self) -> &str {
+        match self {
+            Weight::Gram(_) => "g",
+            Weight::Kilogram(_) => "kg",
+            Weight::Ounces(_) => "oz",
+            Weight::Pounds(_) => "lbs",
+        }
+    }
+}
+
+impl Quantifiable for Volume {
+    fn amount(&self) -> u32 {
+        *match self {
+            Volume::Ounces(fl_oz) => fl_oz,
+            Volume::Cups(cups) => cups,
+            Volume::Pints(pints) => pints,
+            Volume::Spices(spices) => spices,
+            Volume::Teaspoon(teaspoon) => teaspoon,
+            Volume::Tablespoon(tablespoon) => tablespoon,
+            Volume::Milliliter(ml) => ml,
+            Volume::Centiliter(cl) => cl,
+            Volume::Deciliter(dl) => dl,
+            Volume::Liter(l) => l,
+        }
+    }
+
+    fn unit(&self) -> &str {
+        match self {
+            Volume::Ounces(_) => "fl oz",
+            Volume::Cups(_) => "cups",
+            Volume::Pints(_) => "pints",
+            Volume::Spices(_) => "spices",
+            Volume::Teaspoon(_) => "teaspoon",
+            Volume::Tablespoon(_) => "tablespoon",
+            Volume::Milliliter(_) => "ml",
+            Volume::Centiliter(_) => "cl",
+            Volume::Deciliter(_) => "dl",
+            Volume::Liter(_) => "l",
+        }
     }
 }
 
@@ -265,7 +322,7 @@ pub fn divide_unit(i: &Ingredient) -> Ingredient {
 
 #[cfg(test)]
 mod tests {
-    use crate::recipe::Weight;
+    use crate::recipe::{divide_unit, Weight};
     use crate::recipe::{merge, Volume};
     use crate::recipe::{Ingredient, Quantity};
     use log::Level::Warn;
@@ -439,7 +496,7 @@ mod tests {
 
         let items: Vec<Ingredient> = merge(items);
         let milk: &Ingredient = items.first().unwrap();
-        assert_eq!(Quantity::Volume(Volume::Deciliter(932)), milk.amount)
+        assert_eq!(Quantity::Volume(Volume::Milliliter(900)), milk.amount)
     }
 
     #[test]
@@ -451,6 +508,19 @@ mod tests {
 
         let items: Vec<Ingredient> = merge(items);
         let milk: &Ingredient = items.first().unwrap();
+        assert_eq!(Quantity::Volume(Volume::Milliliter(1500u32)), milk.amount)
+    }
+
+    #[test]
+    fn test_change_unit_to_most_human_readable() {
+        let items: Vec<Ingredient> = vec![
+            Ingredient::parse(" - milk, 5 dl").unwrap(),
+            Ingredient::parse(" - milk, 1 l").unwrap(),
+        ];
+
+        let items: Vec<Ingredient> = merge(items);
+        let milk: &Ingredient = items.first().unwrap();
+        let milk: Ingredient = divide_unit(milk);
         assert_eq!(Quantity::Volume(Volume::Deciliter(15u32)), milk.amount)
     }
 }
