@@ -42,9 +42,9 @@ impl Ingredient {
         Ingredient { item, amount }
     }
 
-    fn extract_ingredient(parts: &Vec<&str>) -> String {
+    fn extract_ingredient(parts: &[&str]) -> String {
         let pattern = Regex::new(r"^\s*-\s*").unwrap();
-        let item: String = parts.first().unwrap().to_string();
+        let item: String = (*parts.first().unwrap()).to_string();
         pattern.replace_all(&item, "").to_string()
     }
 }
