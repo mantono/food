@@ -15,11 +15,8 @@ use rand::prelude::StdRng;
 use rand::seq::SliceRandom;
 use rand::SeedableRng;
 use regex::Regex;
-use std::borrow::BorrowMut;
-use std::net::Shutdown::Read;
 use std::path::PathBuf;
 use std::process;
-use std::process::exit;
 
 fn main() {
     let cfg: Config = Config::from_args(args::args());

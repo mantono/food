@@ -1,7 +1,5 @@
 use chrono::Datelike;
 use clap::ArgMatches;
-use rand::Rng;
-use std::str::FromStr;
 
 pub struct Config {
     pub paths: Vec<String>,

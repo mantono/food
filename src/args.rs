@@ -1,7 +1,4 @@
-use chrono::Datelike;
 use clap::{App, Arg, ArgMatches};
-use rand::Rng;
-use std::borrow::Borrow;
 
 pub fn args<'a>() -> ArgMatches<'a> {
     let path = Arg::with_name("path")

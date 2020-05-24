@@ -1,4 +1,4 @@
-use itertools::{Group, Itertools};
+use itertools::Itertools;
 use regex::Regex;
 use std::fmt;
 use std::ops::Add;
@@ -98,7 +98,7 @@ impl Quantity {
         let number: u32 = match num_input.parse() {
             Ok(0) => return Err(String::from("Invalid amount: 0")),
             Ok(n) => n,
-            Err(e) => {
+            Err(_) => {
                 let err_msg: String = format!("Invalid quantifier/integer: {}", num_input);
                 return Err(err_msg);
             }
