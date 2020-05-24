@@ -98,13 +98,16 @@ pub enum Weight {
     Ounces(u32),
 }
 
+const POUND_TO_GRAMS: f32 = 453.592_38;
+const OUNCE_TO_GRAMS: f32 = 28.349_524;
+
 impl Weight {
     pub fn as_grams(&self) -> u32 {
         match self {
             Weight::Kilogram(w) => 1000 * w,
             Weight::Gram(w) => *w,
-            Weight::Pounds(w) => ((*w as f32) * 453.59237) as u32,
-            Weight::Ounces(w) => ((*w as f32) * 28.349523125) as u32,
+            Weight::Pounds(w) => ((*w as f32) * POUND_TO_GRAMS) as u32,
+            Weight::Ounces(w) => ((*w as f32) * OUNCE_TO_GRAMS) as u32,
         }
     }
 }
@@ -184,6 +187,10 @@ pub enum Volume {
     Ounces(u32),
 }
 
+const PINT_TO_ML: u32 = 473;
+const FLUID_OUNCE_TO_ML: f32 = 29.6;
+const CUP_TO_ML: u32 = 237;
+
 impl Volume {
     pub fn as_milliliters(&self) -> u32 {
         match self {
@@ -193,9 +200,9 @@ impl Volume {
             Volume::Milliliter(v) | Volume::Spices(v) => *v,
             Volume::Tablespoon(v) => v * 15,
             Volume::Teaspoon(v) => v * 5,
-            Volume::Pints(v) => v * 473,
-            Volume::Ounces(v) => ((*v as f32) * 29.6) as u32,
-            Volume::Cups(v) => 237 * v,
+            Volume::Pints(v) => v * PINT_TO_ML,
+            Volume::Ounces(v) => ((*v as f32) * FLUID_OUNCE_TO_ML) as u32,
+            Volume::Cups(v) => CUP_TO_ML * v,
         }
     }
 }
