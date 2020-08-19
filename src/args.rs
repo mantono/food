@@ -15,15 +15,17 @@ pub fn args<'a>() -> ArgMatches<'a> {
         .validator(is_digit)
         .short("l")
         .long("limit")
-        .help("Limit how many files to list")
-        .long_help("Only list the first N files found given by this limit. If no value is set for this option, the application will not stop until it has gone through all files in the directory and subdirectories.");
+        .help("Limit how many recipes to use")
+        .long_help("Select how many different recipes to use when generating the shopping list");
 
     let seed = Arg::with_name("seed")
         .takes_value(true)
         .validator(is_digit)
         .required(false)
         .short("S")
-        .long("seed");
+        .long("seed")
+        .help("Set seed value")
+        .long_help("Set the seed value which will be used to seed the random generator. Setting a different seed value will change which recipes are selected. The seed value is automatically updated on weekly basis.");
 
     let verbosity = Arg::with_name("verbosity")
         .takes_value(true)
@@ -50,7 +52,7 @@ pub fn args<'a>() -> ArgMatches<'a> {
         .long_help("Print debug information about current build for binary, useful for when an issue is encountered and reported");
 
     let args: ArgMatches = App::new(crate_name!())
-        .about("Command line tool for finding large files")
+        .about("Application for generating shopping lists from recipes")
         .version(crate_version!())
         .author(crate_authors!())
         .arg(path)
