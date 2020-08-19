@@ -45,6 +45,7 @@ fn main() {
         .iter()
         .flat_map(|path: &PathBuf| Walker::from(path).unwrap())
         .filter(accept_file_ext)
+        .filter(|f: &PathBuf| !f.ends_with("README.md"))
         .collect();
 
     let mut all_files: Vec<PathBuf> = [found_files, files].concat();
