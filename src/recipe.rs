@@ -1,6 +1,5 @@
 use crate::qty::{Quantity, Volume, Weight};
 use itertools::Itertools;
-use regex::Regex;
 use std::fmt;
 use std::ops::Add;
 
@@ -43,9 +42,8 @@ impl Ingredient {
     }
 
     fn extract_ingredient(parts: &[&str]) -> String {
-        let pattern = Regex::new(r"^\s*-\s*").unwrap();
         let item: String = (*parts.first().unwrap()).to_string();
-        pattern.replace_all(&item, "").to_string()
+        crate::ITEM_PATTERN.replace_all(&item, "").to_lowercase()
     }
 }
 

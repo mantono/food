@@ -1,5 +1,6 @@
 #[macro_use]
 extern crate clap;
+extern crate lazy_static;
 mod args;
 mod cfg;
 mod dbg;
@@ -12,12 +13,17 @@ use crate::dbg::dbg_info;
 use crate::logger::setup_logging;
 use crate::recipe::{divide_unit, merge, Ingredient};
 use fwalker::Walker;
+use lazy_static::lazy_static;
 use rand::prelude::StdRng;
 use rand::seq::SliceRandom;
 use rand::SeedableRng;
 use regex::Regex;
 use std::path::PathBuf;
 use std::process;
+
+lazy_static! {
+    pub static ref ITEM_PATTERN: Regex = Regex::new(r"^\s*-\s+").unwrap();
+}
 
 fn main() {
     let cfg: Config = Config::from_args(args::args());
@@ -45,8 +51,6 @@ fn main() {
     let mut rand = StdRng::seed_from_u64(cfg.seed);
     all_files.shuffle(&mut rand);
 
-    let pattern = Regex::new(r"^\s*-\s*").unwrap();
-
     let output: Vec<_> = all_files
         .iter_mut()
         .take(cfg.limit)
@@ -54,7 +58,7 @@ fn main() {
         .map(std::fs::read_to_string)
         .filter_map(Result::ok)
         .flat_map(|d: String| d.lines().map(str::to_owned).collect::<Vec<String>>())
-        .filter(|line| pattern.is_match(line))
+        .filter(|line| ITEM_PATTERN.is_match(line))
         .map(|line| Ingredient::parse(&line))
         .filter_map(Result::ok)
         .collect();

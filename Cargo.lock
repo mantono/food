@@ -133,6 +133,7 @@ dependencies = [
  "env_logger",
  "fwalker",
  "itertools",
+ "lazy_static",
  "log",
  "rand",
  "regex",
