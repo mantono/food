@@ -40,6 +40,9 @@ impl Config {
     }
 }
 
+/// The generated seed will be the number of whole weeks since UNIX epoch (January 1st 1970)
 fn gen_seed() -> u64 {
-    chrono::Utc::now().num_days_from_ce() as u64
+    let days: u64 = chrono::Utc::now().num_days_from_ce() as u64;
+    let weeks: u64 = days / 7;
+    weeks
 }
