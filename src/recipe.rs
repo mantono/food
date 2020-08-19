@@ -55,7 +55,7 @@ impl std::ops::Add for Ingredient {
             panic!("Cannot add items of different type")
         }
         let quantity = self.amount + other.amount;
-        Ingredient::new(self.item.clone(), quantity)
+        Ingredient::new(self.item, quantity)
     }
 }
 
