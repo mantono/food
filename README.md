@@ -46,6 +46,10 @@ Select seven recipes from the current folder and subdirectories, and generate a 
 Select five recipes and generate a shopping list
 
 `food -l 5 my_recipes/`
+
+### Recipe Format
+See [format](/format) for instructions on how to write recipes.
+
 ## Building
 The application is built with [Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html). Simply run the following command in the project directory.
 ```bash
