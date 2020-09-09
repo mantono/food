@@ -5,6 +5,7 @@ pub struct Config {
     pub paths: Vec<String>,
     pub limit: usize,
     pub seed: u64,
+    pub simple: bool,
     pub verbosity_level: u8,
     pub print_dbg: bool,
 }
@@ -27,6 +28,7 @@ impl Config {
             .unwrap_or(&default_seed)
             .parse()
             .unwrap();
+        let simple: bool = args.is_present("simple");
         let verbosity_level: u8 = args.value_of("verbosity").unwrap().parse::<u8>().unwrap();
         let print_dbg: bool = args.is_present("debug");
 
@@ -34,6 +36,7 @@ impl Config {
             paths,
             limit,
             seed,
+            simple,
             verbosity_level,
             print_dbg,
         }

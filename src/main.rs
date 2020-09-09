@@ -11,7 +11,7 @@ mod recipe;
 use crate::cfg::Config;
 use crate::dbg::dbg_info;
 use crate::logger::setup_logging;
-use crate::recipe::{divide_unit, merge, Ingredient};
+use crate::recipe::{divide_unit, merge, Recipe};
 use fwalker::Walker;
 use lazy_static::lazy_static;
 use rand::prelude::StdRng;
@@ -52,24 +52,63 @@ fn main() {
     let mut rand = StdRng::seed_from_u64(cfg.seed);
     all_files.shuffle(&mut rand);
 
-    let output: Vec<_> = all_files
-        .iter_mut()
-        .take(cfg.limit)
-        .inspect(|f| println!("{:?}", f))
-        .map(std::fs::read_to_string)
-        .filter_map(Result::ok)
-        .flat_map(|d: String| d.lines().map(str::to_owned).collect::<Vec<String>>())
-        .filter(|line| ITEM_PATTERN.is_match(line))
-        .map(|line| Ingredient::parse(&line))
-        .filter_map(Result::ok)
-        .collect();
-
-    let output = merge(output);
+    let recipes: Vec<Recipe> = select_recipes(all_files, cfg.limit, cfg.simple);
+    let output = merge(recipes);
 
     output
         .iter()
         .map(divide_unit)
         .for_each(|i| println!("{}", i))
+}
+
+fn select_recipes(mut files: Vec<PathBuf>, limit: usize, only_simple: bool) -> Vec<Recipe> {
+    if only_simple {
+        let recipes: Vec<Recipe> = files
+            .iter()
+            .filter_map(|f| Recipe::from_file(f.to_path_buf()))
+            .inspect(|f| println!("{} => {}", f.title, f.size()))
+            .collect();
+
+        let sizes: Vec<usize> = recipes.iter().map(|r: &Recipe| r.size()).collect();
+        let median_ingredients: usize = median(&sizes);
+        log::debug!("Will parition on median size: {}", median_ingredients);
+
+        let (under, over): (Vec<_>, Vec<_>) = recipes
+            .iter()
+            .partition(|r: &&Recipe| r.size() <= median_ingredients);
+
+        let recipes = [&under[..], &over[..]].concat();
+
+        recipes
+            .iter()
+            .take(limit)
+            .inspect(|f| println!("{}", f))
+            .map(|r| r.to_owned().to_owned())
+            .collect()
+    } else {
+        files
+            .iter_mut()
+            .take(limit)
+            .filter_map(|f| Recipe::from_file(f.to_path_buf()))
+            .inspect(|f| println!("{}", f))
+            .collect()
+    }
+}
+
+fn median(list: &[usize]) -> usize {
+    let len: usize = list.len();
+    let mid_index: usize = len / 2;
+    if len % 2 == 0 {
+        let range = (mid_index - 1)..(mid_index + 1);
+        mean(&list[range])
+    } else {
+        list[mid_index]
+    }
+}
+
+fn mean(list: &[usize]) -> usize {
+    let sum: usize = Iterator::sum(list.iter());
+    sum / list.len()
 }
 
 fn check_path(path: &PathBuf) {

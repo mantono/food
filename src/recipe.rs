@@ -1,7 +1,61 @@
 use crate::qty::{Quantity, Volume, Weight};
 use itertools::Itertools;
+use std::cmp::Ordering;
 use std::fmt;
 use std::ops::Add;
+use std::path::PathBuf;
+
+#[derive(Eq, PartialEq, Hash, Debug, Clone)]
+pub struct Recipe {
+    pub title: String,
+    pub ingredients: Vec<Ingredient>,
+}
+
+impl Recipe {
+    pub fn size(&self) -> usize {
+        self.ingredients.len()
+    }
+
+    pub fn from_file(path: PathBuf) -> Option<Recipe> {
+        let lines: Vec<String> = match std::fs::read_to_string(path) {
+            Ok(content) => content.lines().map(str::to_owned).collect(),
+            Err(_) => return None,
+        };
+
+        let title: String = lines
+            .first()
+            .clone()
+            .expect("Expected a first line")
+            .to_string();
+
+        let ingredients: Vec<Ingredient> = lines
+            .iter()
+            .filter(|line| crate::ITEM_PATTERN.is_match(line))
+            .map(|line| Ingredient::parse(&line))
+            .filter_map(Result::ok)
+            .collect();
+
+        Some(Recipe { title, ingredients })
+    }
+}
+
+impl Ord for Recipe {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.size().cmp(&other.size())
+    }
+}
+
+impl PartialOrd for Recipe {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl std::fmt::Display for Recipe {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.title)
+    }
+}
 
 #[derive(Eq, PartialEq, Hash, Debug, Clone)]
 pub struct Ingredient {
@@ -59,7 +113,13 @@ impl std::ops::Add for Ingredient {
     }
 }
 
-pub fn merge(mut ingredients: Vec<Ingredient>) -> Vec<Ingredient> {
+pub fn merge(mut recipes: Vec<Recipe>) -> Vec<Ingredient> {
+    let mut ingredients: Vec<Ingredient> = recipes
+        .iter_mut()
+        .map(|r| r.ingredients.clone())
+        .flatten()
+        .collect();
+
     ingredients.sort_by(|i0, i1| i0.item.cmp(&i1.item));
     ingredients
         .iter()

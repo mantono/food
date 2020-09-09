@@ -27,6 +27,12 @@ pub fn args<'a>() -> ArgMatches<'a> {
         .help("Set seed value")
         .long_help("Set the seed value which will be used to seed the random generator. Setting a different seed value will change which recipes are selected. The seed value is automatically updated on weekly basis.");
 
+    let simple = Arg::with_name("simple")
+        .short("s")
+        .long("simple")
+        .help("Prefer simple recipes")
+        .long_help("Only use simple recipes, with less ingredients, as far as possible");
+
     let verbosity = Arg::with_name("verbosity")
         .takes_value(true)
         .default_value("1")
@@ -58,6 +64,7 @@ pub fn args<'a>() -> ArgMatches<'a> {
         .arg(path)
         .arg(limit)
         .arg(seed)
+        .arg(simple)
         .arg(verbosity)
         .arg(debug)
         .get_matches();
