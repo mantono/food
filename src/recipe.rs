@@ -113,13 +113,17 @@ impl std::ops::Add for Ingredient {
     }
 }
 
-pub fn merge(mut recipes: Vec<Recipe>) -> Vec<Ingredient> {
-    let mut ingredients: Vec<Ingredient> = recipes
+pub fn join_ingredients(mut recipes: Vec<Recipe>) -> Vec<Ingredient> {
+    let ingredients: Vec<Ingredient> = recipes
         .iter_mut()
         .map(|r| r.ingredients.clone())
         .flatten()
         .collect();
 
+    merge(ingredients)
+}
+
+pub fn merge(mut ingredients: Vec<Ingredient>) -> Vec<Ingredient> {
     ingredients.sort_by(|i0, i1| i0.item.cmp(&i1.item));
     ingredients
         .iter()

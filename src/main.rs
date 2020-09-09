@@ -11,7 +11,7 @@ mod recipe;
 use crate::cfg::Config;
 use crate::dbg::dbg_info;
 use crate::logger::setup_logging;
-use crate::recipe::{divide_unit, merge, Recipe};
+use crate::recipe::{divide_unit, join_ingredients, Recipe};
 use fwalker::Walker;
 use lazy_static::lazy_static;
 use rand::prelude::StdRng;
@@ -53,7 +53,7 @@ fn main() {
     all_files.shuffle(&mut rand);
 
     let recipes: Vec<Recipe> = select_recipes(all_files, cfg.limit, cfg.simple);
-    let output = merge(recipes);
+    let output = join_ingredients(recipes);
 
     output
         .iter()
