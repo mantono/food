@@ -15,6 +15,9 @@ FLAGS:
     -h, --help
             Prints help information
 
+    -s, --simple
+            Only use simple recipes, with less ingredients, as far as possible
+
     -V, --version
             Prints version information
 
@@ -26,6 +29,9 @@ OPTIONS:
     -S, --seed <seed>
             Set the seed value which will be used to seed the random generator. Setting a different seed value will
             change which recipes are selected. The seed value is automatically updated on weekly basis.
+    -z, --serving-size <serving_size>
+            Set a custom serving size for each recipe
+
     -v, --verbosity <verbosity>
             Set the verbosity level, from 0 (least amount of output) to 5 (most verbose). Note that logging level
             configured via RUST_LOG overrides this setting. [default: 1]
