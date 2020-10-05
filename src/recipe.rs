@@ -2,18 +2,40 @@ use crate::qty::{Quantity, Volume, Weight};
 use itertools::Itertools;
 use std::cmp::Ordering;
 use std::fmt;
-use std::ops::Add;
+use std::ops::{Add, MulAssign};
 use std::path::PathBuf;
 
 #[derive(Eq, PartialEq, Hash, Debug, Clone)]
 pub struct Recipe {
     pub title: String,
     pub ingredients: Vec<Ingredient>,
+    pub servings: Option<u8>,
 }
 
 impl Recipe {
+    pub fn new(title: &str, ingredients: Vec<Ingredient>, servings: u8) -> Recipe {
+        Recipe {
+            title: title.to_string(),
+            ingredients,
+            servings: Some(servings),
+        }
+    }
+
     pub fn size(&self) -> usize {
         self.ingredients.len()
+    }
+
+    pub fn apply_serving_size(&mut self, size: u8) {
+        let current: u8 = match self.servings {
+            Some(n) if n == size => return,
+            None => return,
+            Some(n) => n,
+        };
+
+        let ratio: f32 = (size as f32) / (current as f32);
+        self.ingredients
+            .iter_mut()
+            .for_each(|i: &mut Ingredient| i.mul_assign(ratio))
     }
 
     pub fn from_file(path: PathBuf) -> Option<Recipe> {
@@ -28,14 +50,28 @@ impl Recipe {
             .expect("Expected a first line")
             .to_string();
 
+        let mut servings: Option<u8> = None;
+
         let ingredients: Vec<Ingredient> = lines
             .iter()
+            .inspect(|line| {
+                if crate::SERVINGS_PATTERN.is_match(&line) {
+                    let parts = line.split(':').collect::<Vec<&str>>();
+                    let last = parts.last().unwrap();
+                    let number: u8 = last.trim().parse().unwrap();
+                    servings = Some(number)
+                }
+            })
             .filter(|line| crate::ITEM_PATTERN.is_match(line))
             .map(|line| Ingredient::parse(&line))
             .filter_map(Result::ok)
             .collect();
 
-        Some(Recipe { title, ingredients })
+        Some(Recipe {
+            title,
+            ingredients,
+            servings,
+        })
     }
 }
 
@@ -53,7 +89,11 @@ impl PartialOrd for Recipe {
 
 impl std::fmt::Display for Recipe {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.title)
+        let servings = match self.servings {
+            Some(n) => n.to_string(),
+            None => "".to_string(),
+        };
+        write!(f, "{}, {}", self.title, servings)
     }
 }
 
@@ -110,6 +150,12 @@ impl std::ops::Add for Ingredient {
         }
         let quantity = self.amount + other.amount;
         Ingredient::new(self.item, quantity)
+    }
+}
+
+impl std::ops::MulAssign<f32> for Ingredient {
+    fn mul_assign(&mut self, rhs: f32) {
+        self.amount *= rhs
     }
 }
 
@@ -182,8 +228,8 @@ pub fn divide_unit(i: &Ingredient) -> Ingredient {
 #[cfg(test)]
 mod tests {
     use crate::qty::{Quantity, Volume};
-    use crate::recipe::Ingredient;
     use crate::recipe::{divide_unit, merge};
+    use crate::recipe::{Ingredient, Recipe};
 
     #[test]
     fn test_parse_single_ingredient() {
@@ -234,5 +280,29 @@ mod tests {
         let milk: &Ingredient = items.first().unwrap();
         let milk: Ingredient = divide_unit(milk);
         assert_eq!(Quantity::Volume(Volume::Deciliter(15u32)), milk.amount)
+    }
+
+    #[test]
+    fn test_change_servings_size() {
+        let ingredients: Vec<Ingredient> = vec![
+            Ingredient::parse(" - milk, 5 dl").unwrap(),
+            Ingredient::parse(" - eggs, 5").unwrap(),
+        ];
+        let mut recipe = Recipe::new("Pancakes", ingredients, 4u8);
+        recipe.apply_serving_size(8u8);
+
+        let milk: u32 = match &recipe.ingredients.first().unwrap().amount {
+            Quantity::Volume(v) => v.as_milliliters(),
+            _ => 0u32,
+        };
+
+        assert_eq!(1_000u32, milk);
+
+        let eggs: u32 = match &recipe.ingredients.last().unwrap().amount {
+            Quantity::Pieces(p) => *p,
+            _ => 0u32,
+        };
+
+        assert_eq!(10u32, eggs);
     }
 }

@@ -33,6 +33,14 @@ pub fn args<'a>() -> ArgMatches<'a> {
         .help("Prefer simple recipes")
         .long_help("Only use simple recipes, with less ingredients, as far as possible");
 
+    let serving_size = Arg::with_name("serving_size")
+        .short("z")
+        .takes_value(true)
+        .validator(is_digit)
+        .long("serving-size")
+        .help("Set serving size")
+        .long_help("Set a custom serving size for each recipe");
+
     let verbosity = Arg::with_name("verbosity")
         .takes_value(true)
         .default_value("1")
@@ -65,6 +73,7 @@ pub fn args<'a>() -> ArgMatches<'a> {
         .arg(limit)
         .arg(seed)
         .arg(simple)
+        .arg(serving_size)
         .arg(verbosity)
         .arg(debug)
         .get_matches();

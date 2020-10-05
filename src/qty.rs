@@ -29,6 +29,42 @@ impl std::ops::Add for Quantity {
     }
 }
 
+fn multi(n: u32, m: f32) -> u32 {
+    let new: u32 = ((n as f32) * m) as u32;
+    if new > 0 {
+        new
+    } else {
+        1
+    }
+}
+
+impl std::ops::MulAssign<f32> for Quantity {
+    fn mul_assign(&mut self, rhs: f32) {
+        match self {
+            Quantity::Pieces(ref mut n) => *n = multi(*n, rhs),
+            Quantity::Weight(w) => match w {
+                Weight::Gram(ref mut n) => *n = multi(*n, rhs),
+                Weight::Kilogram(ref mut n) => *n = multi(*n, rhs),
+                Weight::Ounces(ref mut n) => *n = multi(*n, rhs),
+                Weight::Pounds(ref mut n) => *n = multi(*n, rhs),
+            },
+            Quantity::Volume(v) => match v {
+                Volume::Ounces(ref mut n) => *n = multi(*n, rhs),
+                Volume::Centiliter(ref mut n) => *n = multi(*n, rhs),
+                Volume::Cups(ref mut n) => *n = multi(*n, rhs),
+                Volume::Deciliter(ref mut n) => *n = multi(*n, rhs),
+                Volume::Liter(ref mut n) => *n = multi(*n, rhs),
+                Volume::Milliliter(ref mut n) => *n = multi(*n, rhs),
+                Volume::Pints(ref mut n) => *n = multi(*n, rhs),
+                Volume::Spices(ref mut n) => *n = multi(*n, rhs),
+                Volume::Tablespoon(ref mut n) => *n = multi(*n, rhs),
+                Volume::Teaspoon(ref mut n) => *n = multi(*n, rhs),
+            },
+            Quantity::Custom(n, _) => *n = multi(*n, rhs),
+        }
+    }
+}
+
 impl Quantity {
     pub fn parse(input: &str) -> Result<Quantity, String> {
         if input.is_empty() {
@@ -87,6 +123,26 @@ impl fmt::Display for Quantity {
             Quantity::Custom(n, t) => (*n, t),
         };
         write!(f, "{} {}", number, unit)
+    }
+}
+
+impl Quantifiable for Quantity {
+    fn amount(&self) -> u32 {
+        match self {
+            Quantity::Pieces(n) => *n,
+            Quantity::Weight(w) => w.amount(),
+            Quantity::Volume(v) => v.amount(),
+            Quantity::Custom(n, _) => *n,
+        }
+    }
+
+    fn unit(&self) -> &str {
+        match self {
+            Quantity::Pieces(_) => self.unit(),
+            Quantity::Weight(_) => self.unit(),
+            Quantity::Volume(_) => self.unit(),
+            Quantity::Custom(_, _) => self.unit(),
+        }
     }
 }
 
@@ -218,7 +274,7 @@ impl std::ops::Add for Volume {
 
 #[cfg(test)]
 mod tests {
-    use crate::qty::{Quantity, Volume, Weight};
+    use crate::qty::{Quantifiable, Quantity, Volume, Weight};
 
     #[test]
     fn test_parse_quantity_volume_liter() {
@@ -470,5 +526,12 @@ mod tests {
         assert_eq!(Quantity::Pieces(2), Quantity::parse("2").unwrap());
         assert!(Quantity::parse("0").is_err());
         assert!(Quantity::parse("-1").is_err());
+    }
+
+    #[test]
+    fn test_mul_assign() {
+        let mut pieces = Quantity::Pieces(5);
+        pieces *= 2f32;
+        assert_eq!(10u32, pieces.amount());
     }
 }

@@ -23,6 +23,8 @@ use std::process;
 
 lazy_static! {
     pub static ref ITEM_PATTERN: Regex = Regex::new(r"^\s*-\s+").unwrap();
+    pub static ref SERVINGS_PATTERN: Regex =
+        Regex::new(r"^\s*(servings|portioner):\s*\d+\s*$").unwrap();
 }
 
 fn main() {
@@ -52,7 +54,14 @@ fn main() {
     let mut rand = StdRng::seed_from_u64(cfg.seed);
     all_files.shuffle(&mut rand);
 
-    let recipes: Vec<Recipe> = select_recipes(all_files, cfg.limit, cfg.simple);
+    let mut recipes: Vec<Recipe> = select_recipes(all_files, cfg.limit, cfg.simple);
+
+    if let Some(servings) = cfg.serving_size {
+        recipes
+            .iter_mut()
+            .for_each(|r: &mut Recipe| r.apply_serving_size(servings));
+    }
+
     let output = join_ingredients(recipes);
 
     output
@@ -71,7 +80,7 @@ fn select_recipes(mut files: Vec<PathBuf>, limit: usize, only_simple: bool) -> V
 
         let sizes: Vec<usize> = recipes.iter().map(|r: &Recipe| r.size()).collect();
         let median_ingredients: usize = median(&sizes);
-        log::debug!("Will parition on median size: {}", median_ingredients);
+        log::debug!("Will partition on median size: {}", median_ingredients);
 
         let (under, over): (Vec<_>, Vec<_>) = recipes
             .iter()
